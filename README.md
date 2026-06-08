@@ -115,7 +115,23 @@ expose this port directly to the public internet. To build a clickable app wrapp
 ./build-macos-app.sh
 ```
 
+### Local Text-to-Speech (Kokoro TTS)
+
+Odysseus supports offline high-quality speech synthesis using the Kokoro ONNX model. Responses can be read aloud sentence-by-sentence as they stream.
+
+To configure local TTS:
+1. Download the Kokoro ONNX model (`kokoro-v1.0.onnx`) and the voices binary (`voices-v1.0.bin`) from the official [Kokoro-ONNX Releases](https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.0).
+2. Place these files inside the `kokoro-v1.0/` folder in the project root:
+   * `kokoro-v1.0/kokoro-v1.0.onnx`
+   * `kokoro-v1.0/voices-v1.0.bin`
+3. Open the **Settings** modal in the Odysseus UI.
+4. Go to the **Maximus** section.
+5. Set the absolute path of the directory (it defaults to the `kokoro-v1.0` folder in the project directory).
+6. Click **Cargar Voces** to fetch the list of voices, choose your default voice (which indicates its accent/language and gender), and click **Guardar Configuración**.
+7. Toggle speech synthesis on/off in the chat input bar by clicking the speaker icon next to the shell toggle.
+
 <details>
+
 <summary>Cookbook, GPU, Ollama, and troubleshooting notes</summary>
 
 **Docker bundled services.** Compose starts Odysseus, ChromaDB, SearXNG, and
