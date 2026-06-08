@@ -45,3 +45,6 @@ pytest
 pytest-asyncio
 kokoro-onnx
 soundfile
+faster-whisper
+av
+

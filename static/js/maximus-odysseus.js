@@ -83,6 +83,24 @@
             background: rgba(16, 185, 129, 0.1) !important;
             border-color: rgba(16, 185, 129, 0.2) !important;
         }
+        .input-icon-btn.maximus-recording {
+            color: #ef4444 !important;
+            background: rgba(239, 68, 68, 0.1) !important;
+            border-color: rgba(239, 68, 68, 0.2) !important;
+            animation: maximus-pulse 1.5s infinite;
+        }
+        @keyframes maximus-pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .maximus-loading-spinner {
+            animation: maximus-spin 1s linear infinite;
+        }
+        @keyframes maximus-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     `;
     document.head.appendChild(style);
 
@@ -115,7 +133,10 @@
         // 2. Inject Composer Auto-Read Toggle Button
         injectComposerToggleButton();
 
-        // 3. Patch the AITTSManager
+        // 3. Inject Composer Speech-to-Text Microphone Button
+        injectComposerMicButton();
+
+        // 4. Patch the AITTSManager
         patchTTSManager();
     }
 
@@ -171,9 +192,10 @@
         panel.innerHTML = `
             <div class="admin-card">
                 <h2><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;opacity:0.6"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>Maximus</h2>
-                <div class="admin-toggle-sub" style="margin-bottom:15px">Configura la ruta de la carpeta Kokoro v1.0 y la voz local a utilizar.</div>
+                <div class="admin-toggle-sub" style="margin-bottom:15px">Configura la ruta de la carpeta Kokoro v1.0, las voces y el modelo local de Whisper para la transcripción.</div>
                 
-                <div class="settings-col">
+                <h3 style="font-size: 13px; font-weight: 600; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; color: var(--text-light, #9ca3af);">Texto a Voz (Kokoro TTS)</h3>
+                <div class="settings-col" style="margin-bottom: 20px;">
                     <div class="settings-row" style="margin-bottom:12px">
                         <label class="settings-label">Directorio de Kokoro v1.0</label>
                         <div style="display:flex; gap:8px; flex:1;">
@@ -187,9 +209,49 @@
                         <span id="maximus-dir-status" class="maximus-status" style="flex:1;"></span>
                     </div>
                     
-                    <div class="settings-row" style="margin-bottom:20px">
+                    <div class="settings-row" style="margin-bottom:12px">
                         <label class="settings-label">Voz Predeterminada</label>
                         <select id="maximus-voice-select" class="settings-select" style="flex:1;"></select>
+                    </div>
+                </div>
+
+                <h3 style="font-size: 13px; font-weight: 600; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; color: var(--text-light, #9ca3af);">Voz a Texto (Whisper STT)</h3>
+                <div class="settings-col">
+                    <div class="settings-row" style="margin-bottom:12px">
+                        <label class="settings-label">Modelo de Whisper</label>
+                        <select id="maximus-whisper-model" class="settings-select" style="flex:1;">
+                            <option value="tiny">tiny (Muy rápido, ~75MB)</option>
+                            <option value="tiny.en">tiny.en (Solo inglés, ~75MB)</option>
+                            <option value="base">base (Rápido, ~145MB) [Recomendado]</option>
+                            <option value="base.en">base.en (Solo inglés, ~145MB)</option>
+                            <option value="small">small (Preciso, ~460MB)</option>
+                            <option value="small.en">small.en (Solo inglés, ~460MB)</option>
+                            <option value="medium">medium (Muy preciso, ~1.5GB)</option>
+                            <option value="medium.en">medium.en (Solo inglés, ~1.5GB)</option>
+                            <option value="large-v1">large-v1 (Máxima calidad v1, ~3GB)</option>
+                            <option value="large-v2">large-v2 (Máxima calidad v2, ~3GB)</option>
+                            <option value="large-v3">large-v3 (Máxima calidad v3, ~3GB)</option>
+                            <option value="large">large (Equivalente a large-v3, ~3GB)</option>
+                        </select>
+                    </div>
+                    <div class="settings-row" style="margin-bottom:12px">
+                        <label class="settings-label">Idioma</label>
+                        <select id="maximus-whisper-lang" class="settings-select" style="flex:1;">
+                            <option value="">Auto-detect (Detectar automáticamente)</option>
+                            <option value="es">Español (es)</option>
+                            <option value="en">English (en)</option>
+                            <option value="fr">Français (fr)</option>
+                            <option value="de">Deutsch (de)</option>
+                            <option value="it">Italiano (it)</option>
+                            <option value="pt">Português (pt)</option>
+                            <option value="ja">日本語 (ja)</option>
+                            <option value="zh">中文 (zh)</option>
+                            <option value="ru">Русский (ru)</option>
+                            <option value="ko">한국어 (ko)</option>
+                            <option value="nl">Nederlands (nl)</option>
+                            <option value="pl">Polski (pl)</option>
+                            <option value="tr">Türkçe (tr)</option>
+                        </select>
                     </div>
                 </div>
 
@@ -229,6 +291,16 @@
                 if (data.kokoro_dir) {
                     await loadVoices(data.kokoro_dir, data.voice);
                 }
+            }
+
+            const whisperModelSelect = document.getElementById('maximus-whisper-model');
+            if (whisperModelSelect && data.whisper_model) {
+                whisperModelSelect.value = data.whisper_model;
+            }
+
+            const whisperLangSelect = document.getElementById('maximus-whisper-lang');
+            if (whisperLangSelect && data.whisper_language !== undefined) {
+                whisperLangSelect.value = data.whisper_language;
             }
         } catch (e) {
             console.error(DEBUG_PREFIX, 'Error loading settings:', e);
@@ -293,8 +365,10 @@
     async function saveSettings() {
         const dirInput = document.getElementById('maximus-kokoro-dir');
         const voiceSelect = document.getElementById('maximus-voice-select');
+        const whisperModel = document.getElementById('maximus-whisper-model');
+        const whisperLang = document.getElementById('maximus-whisper-lang');
         const statusEl = document.getElementById('maximus-save-status');
-        if (!dirInput || !voiceSelect || !statusEl) return;
+        if (!dirInput || !voiceSelect || !whisperModel || !whisperLang || !statusEl) return;
 
         statusEl.className = 'maximus-status';
         statusEl.textContent = 'Guardando...';
@@ -306,7 +380,9 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     kokoro_dir: dirInput.value.trim(),
-                    voice: voiceSelect.value
+                    voice: voiceSelect.value,
+                    whisper_model: whisperModel.value,
+                    whisper_language: whisperLang.value
                 })
             });
 
@@ -664,5 +740,171 @@
 
         // Run availability check immediately to set proper state
         window.aiTTSManager.checkAvailability();
+    }
+
+    // ── Inject Composer Microphone Button (STT) ──
+    function injectComposerMicButton() {
+        const chatInputLeft = document.querySelector('.chat-input-left');
+        if (!chatInputLeft || document.getElementById('maximus-mic-toggle-btn')) return;
+
+        // Create mic button
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'input-icon-btn';
+        btn.id = 'maximus-mic-toggle-btn';
+        btn.title = 'Dictar texto (Whisper)';
+        btn.setAttribute('aria-pressed', 'false');
+        btn.setAttribute('data-mode-tool', 'true');
+        
+        const SVG_MIC = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
+                <line x1="12" y1="19" x2="12" y2="22"></line>
+            </svg>
+        `;
+        btn.innerHTML = SVG_MIC;
+
+        // Insert right after #maximus-tts-toggle-btn or #bash-toggle-btn, or at the end
+        const refBtn = document.getElementById('maximus-tts-toggle-btn') || document.getElementById('bash-toggle-btn');
+        if (refBtn && refBtn.nextSibling) {
+            chatInputLeft.insertBefore(btn, refBtn.nextSibling);
+        } else {
+            chatInputLeft.appendChild(btn);
+        }
+
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+
+        btn.addEventListener('click', async () => {
+            if (isRecording) {
+                // Stop recording
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                }
+            } else {
+                // Check secure context
+                if (!window.isSecureContext) {
+                    showToast('El dictado por voz requiere un contexto seguro (HTTPS o localhost).');
+                    return;
+                }
+
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    showToast('Tu navegador no soporta el acceso al micrófono.');
+                    return;
+                }
+
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    audioChunks = [];
+                    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                    
+                    mediaRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) {
+                            audioChunks.push(event.data);
+                        }
+                    };
+
+                    mediaRecorder.onstop = async () => {
+                        // Stop all mic tracks
+                        stream.getTracks().forEach(track => track.stop());
+
+                        // Set transcribing state
+                        btn.classList.remove('maximus-recording');
+                        btn.classList.add('maximus-loading');
+                        btn.disabled = true;
+                        btn.innerHTML = `<svg class="maximus-loading-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>`;
+                        showToast('Transcribiendo audio...', 4000);
+
+                        try {
+                            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                            const formData = new FormData();
+                            formData.append('file', audioBlob, 'audio.webm');
+
+                            const res = await fetch('/api/stt/transcribe', {
+                                method: 'POST',
+                                body: formData
+                            });
+
+                            if (!res.ok) {
+                                const err = await res.json().catch(() => ({}));
+                                throw new Error(err.detail?.message || 'Error en la transcripción');
+                            }
+
+                            const data = await res.json();
+                            if (data.text && data.text.trim()) {
+                                insertTextAtCursor(data.text.trim());
+                                showToast('Dictado finalizado');
+                            } else {
+                                showToast('No se detectó voz hablada');
+                            }
+                        } catch (err) {
+                            console.error(DEBUG_PREFIX, 'Whisper transcription failed:', err);
+                            showToast('Fallo la transcripción: ' + err.message);
+                        } finally {
+                            btn.classList.remove('maximus-loading');
+                            btn.disabled = false;
+                            btn.innerHTML = SVG_MIC;
+                            isRecording = false;
+                        }
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    btn.classList.add('maximus-recording');
+                    showToast('Escuchando... pulsa de nuevo para transcribir');
+                } catch (err) {
+                    console.error(DEBUG_PREFIX, 'Microphone start error:', err);
+                    if (err.name === 'NotAllowedError') {
+                        showToast('Permiso de micrófono denegado');
+                    } else {
+                        showToast('Error de micrófono: ' + err.message);
+                    }
+                    isRecording = false;
+                }
+            }
+        });
+    }
+
+    // ── Helper to insert text at the cursor position in composer input ──
+    function insertTextAtCursor(text) {
+        const input = document.getElementById('message');
+        if (!input) return;
+
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const currentText = input.value;
+
+        // Insert spacing around if needed
+        const preSpace = (start > 0 && currentText[start - 1] !== ' ') ? ' ' : '';
+        const postSpace = (end < currentText.length && currentText[end] !== ' ') ? ' ' : '';
+        const insertText = preSpace + text + postSpace;
+
+        input.value = currentText.substring(0, start) + insertText + currentText.substring(end);
+
+        // Position cursor right after the inserted text
+        const newPos = start + insertText.length;
+        input.selectionStart = input.selectionEnd = newPos;
+
+        // Trigger resize and other listeners
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.focus();
+    }
+
+    // ── Toast notification helper ──
+    function showToast(msg, duration = 3000) {
+        const toastEl = document.getElementById('toast');
+        if (!toastEl) return;
+        
+        toastEl.textContent = msg;
+        toastEl.classList.remove('error', 'exiting');
+        toastEl.classList.add('show');
+        
+        clearTimeout(toastEl._hideTimer);
+        toastEl._hideTimer = setTimeout(() => {
+            toastEl.classList.add('exiting');
+            toastEl.classList.remove('show');
+        }, duration);
     }
 })();

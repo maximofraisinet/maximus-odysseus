@@ -27,15 +27,34 @@ class STTService:
 
     # ── Settings ──
 
-    def _load_settings(self) -> dict:
+    def _load_settings(self, for_stats: bool = False) -> dict:
         from src.settings import load_settings
         saved = load_settings()
+        
+        stt_enabled = saved.get("stt_enabled", False)
+        stt_provider = saved.get("stt_provider", "disabled")
+        stt_model = saved.get("stt_model", "base")
+        stt_language = saved.get("stt_language", "")
+        
+        if not for_stats:
+            # For actual transcription and backend availability checks, always allow local Whisper via Maximus settings
+            from services.maximus_odysseus_tts import get_maximus_odysseus_settings
+            try:
+                maximus = get_maximus_odysseus_settings()
+                stt_enabled = True
+                stt_provider = "local"
+                stt_model = maximus.get("whisper_model", "base")
+                stt_language = maximus.get("whisper_language", "")
+            except Exception:
+                pass
+                
         return {
-            "stt_enabled": saved.get("stt_enabled", False),
-            "stt_provider": saved.get("stt_provider", "disabled"),
-            "stt_model": saved.get("stt_model", "base"),
-            "stt_language": saved.get("stt_language", ""),
+            "stt_enabled": stt_enabled,
+            "stt_provider": stt_provider,
+            "stt_model": stt_model,
+            "stt_language": stt_language,
         }
+
 
     @property
     def available(self) -> bool:
@@ -80,8 +99,17 @@ class STTService:
                     use_cuda = False
                 device = "cuda" if use_cuda else "cpu"
                 compute_type = "float16" if device == "cuda" else "int8"
-                self._whisper_model = WhisperModel(model_size, device=device, compute_type=compute_type)
-                logger.info(f"faster-whisper model '{model_size}' loaded on {device}")
+                
+                try:
+                    self._whisper_model = WhisperModel(model_size, device=device, compute_type=compute_type)
+                    logger.info(f"faster-whisper model '{model_size}' loaded on {device}")
+                except Exception as cuda_ex:
+                    if device == "cuda":
+                        logger.warning(f"Failed to load whisper model on CUDA ({cuda_ex}). Falling back to CPU...")
+                        self._whisper_model = WhisperModel(model_size, device="cpu", compute_type="int8")
+                        logger.info(f"faster-whisper model '{model_size}' successfully loaded on CPU fallback")
+                    else:
+                        raise cuda_ex
             except Exception as e:
                 logger.error(f"Failed to load whisper model: {e}")
                 return None
@@ -174,7 +202,7 @@ class STTService:
             return None
 
     def get_stats(self) -> Dict[str, Any]:
-        settings = self._load_settings()
+        settings = self._load_settings(for_stats=True)
         provider = settings["stt_provider"]
         stt_enabled = settings.get("stt_enabled", False)
         # If toggle is off, report as disabled
@@ -197,6 +225,11 @@ class STTService:
 
         return stats
 
+    def invalidate_whisper_model(self) -> None:
+        """Reset the cached local Whisper model."""
+        self._whisper_model = None
+        logger.info("Local Whisper model cache invalidated")
+
 
 # Module-level singleton
 _stt_service = None
@@ -206,3 +239,4 @@ def get_stt_service() -> STTService:
     if _stt_service is None:
         _stt_service = STTService()
     return _stt_service
+

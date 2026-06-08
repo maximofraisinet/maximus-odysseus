@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 class SettingsRequest(BaseModel):
     kokoro_dir: str
     voice: str
+    whisper_model: str
+    whisper_language: str
 
 class SynthesizeRequest(BaseModel):
     text: str
@@ -39,6 +41,8 @@ def setup_maximus_odysseus_routes():
         try:
             kokoro_dir = request.kokoro_dir.strip()
             voice = request.voice.strip()
+            whisper_model = request.whisper_model.strip()
+            whisper_language = request.whisper_language.strip()
             
             # Validation
             if not kokoro_dir:
@@ -54,9 +58,22 @@ def setup_maximus_odysseus_routes():
                     detail="El directorio debe contener los archivos 'kokoro-v1.0.onnx' y 'voices-v1.0.bin'."
                 )
                 
+            old_settings = get_maximus_odysseus_settings()
+            
+            # Invalidate cached Whisper model if model size changed
+            if old_settings.get("whisper_model") != whisper_model:
+                try:
+                    from services.stt import get_stt_service
+                    stt = get_stt_service()
+                    stt.invalidate_whisper_model()
+                except Exception as ex:
+                    logger.warning(f"Could not invalidate whisper model cache: {ex}")
+
             save_maximus_odysseus_settings({
                 "kokoro_dir": kokoro_dir,
-                "voice": voice
+                "voice": voice,
+                "whisper_model": whisper_model,
+                "whisper_language": whisper_language
             })
             return {"success": True, "message": "Configuración guardada correctamente."}
         except HTTPException:

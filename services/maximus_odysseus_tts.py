@@ -15,8 +15,11 @@ logger = logging.getLogger(__name__)
 # Default settings
 DEFAULT_KOKORO_SETTINGS = {
     "kokoro_dir": "/home/maximo/Código/maximus-odysseus/kokoro-v1.0",
-    "voice": "em_alex"
+    "voice": "em_alex",
+    "whisper_model": "base",
+    "whisper_language": ""
 }
+
 
 SETTINGS_FILE = os.path.join(DATA_DIR, "maximus_odysseus_settings.json")
 
