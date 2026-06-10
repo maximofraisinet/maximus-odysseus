@@ -17,6 +17,8 @@ class SettingsRequest(BaseModel):
     voice: str
     whisper_model: str
     whisper_language: str
+    whisper_gpu: bool = True
+    whisper_preload: bool = False
 
 class SynthesizeRequest(BaseModel):
     text: str
@@ -43,6 +45,8 @@ def setup_maximus_odysseus_routes():
             voice = request.voice.strip()
             whisper_model = request.whisper_model.strip()
             whisper_language = request.whisper_language.strip()
+            whisper_gpu = request.whisper_gpu
+            whisper_preload = request.whisper_preload
             
             # Validation
             if not kokoro_dir:
@@ -60,8 +64,8 @@ def setup_maximus_odysseus_routes():
                 
             old_settings = get_maximus_odysseus_settings()
             
-            # Invalidate cached Whisper model if model size changed
-            if old_settings.get("whisper_model") != whisper_model:
+            # Invalidate cached Whisper model if model size or GPU acceleration changed
+            if old_settings.get("whisper_model") != whisper_model or old_settings.get("whisper_gpu") != whisper_gpu:
                 try:
                     from services.stt import get_stt_service
                     stt = get_stt_service()
@@ -73,7 +77,9 @@ def setup_maximus_odysseus_routes():
                 "kokoro_dir": kokoro_dir,
                 "voice": voice,
                 "whisper_model": whisper_model,
-                "whisper_language": whisper_language
+                "whisper_language": whisper_language,
+                "whisper_gpu": whisper_gpu,
+                "whisper_preload": whisper_preload
             })
             return {"success": True, "message": "Configuración guardada correctamente."}
         except HTTPException:

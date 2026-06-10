@@ -115,9 +115,13 @@ expose this port directly to the public internet. To build a clickable app wrapp
 ./build-macos-app.sh
 ```
 
-### Local Text-to-Speech (Kokoro TTS)
+### Local Voice and Dictation (Maximus)
 
-Odysseus supports offline high-quality speech synthesis using the Kokoro ONNX model. Responses can be read aloud sentence-by-sentence as they stream.
+Odysseus supports fully local, offline speech synthesis (Text-to-Speech) using Kokoro ONNX and dictation (Speech-to-Text) using faster-whisper.
+
+#### 1. Text-to-Speech (Kokoro TTS)
+
+Odysseus supports offline high-quality speech synthesis. Responses can be read aloud sentence-by-sentence as they stream.
 
 To configure local TTS:
 1. Download the Kokoro ONNX model (`kokoro-v1.0.onnx`) and the voices binary (`voices-v1.0.bin`) from the official [Kokoro-ONNX Releases](https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.0).
@@ -129,6 +133,25 @@ To configure local TTS:
 5. Set the absolute path of the directory (it defaults to the `kokoro-v1.0` folder in the project directory).
 6. Click **Cargar Voces** to fetch the list of voices, choose your default voice (which indicates its accent/language and gender), and click **Guardar Configuración**.
 7. Toggle speech synthesis on/off in the chat input bar by clicking the speaker icon next to the shell toggle.
+
+#### 2. Speech-to-Text (Whisper STT)
+
+Odysseus allows you to dictate your messages locally via your microphone using `faster-whisper`.
+
+To configure local STT:
+1. Ensure `faster-whisper` and its optional dependencies are installed. You can install them by running:
+   ```bash
+   pip install faster-whisper
+   ```
+2. Open the **Settings** modal in the Odysseus UI and navigate to the **Maximus** section.
+3. Select the desired **Modelo de Whisper** (from lightweight models like `tiny` or `base` up to larger models like `medium` or `large-v3` depending on your available VRAM/RAM).
+4. Select the **Idioma** (language) of your speech (defaults to `Auto-detect`, with Spanish and English conveniently placed at the top of the list).
+5. Configure the hardware and memory optimization settings:
+   * **Aceleración por GPU (CUDA)**: Toggle whether you want to use GPU acceleration (uses CUDA) for fast transcription, or turn it off to run on CPU and save VRAM for your local LLM.
+   * **Precargar modelo al inicio**: Toggle whether you want to load the model weights into memory immediately on startup, or lazy-load it only when you press the microphone button for the first time (recommended to keep VRAM free).
+6. Save the settings by clicking **Guardar Configuración**.
+7. A microphone icon will appear in the chat composer bar. Click it to start recording your voice, and click it again to stop and automatically transcribe the audio into the chat input.
+
 
 <details>
 

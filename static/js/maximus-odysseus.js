@@ -250,8 +250,25 @@
                             <option value="ko">한국어 (ko)</option>
                             <option value="nl">Nederlands (nl)</option>
                             <option value="pl">Polski (pl)</option>
-                            <option value="tr">Türkçe (tr)</option>
-                        </select>
+                                       </select>
+                    </div>
+                    <div class="settings-row" style="margin-bottom:12px; display:flex; align-items:center;">
+                        <label class="settings-label">Aceleración por GPU (CUDA)</label>
+                        <div style="flex:1; display:flex; align-items:center;">
+                            <label class="admin-switch" title="Usar la GPU para acelerar la transcripción si está disponible">
+                                <input type="checkbox" id="maximus-whisper-gpu" checked />
+                                <span class="admin-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="settings-row" style="margin-bottom:12px; display:flex; align-items:center;">
+                        <label class="settings-label">Precargar modelo al inicio</label>
+                        <div style="flex:1; display:flex; align-items:center;">
+                            <label class="admin-switch" title="Cargar el modelo Whisper en memoria nada más iniciar la aplicación">
+                                <input type="checkbox" id="maximus-whisper-preload" />
+                                <span class="admin-slider"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -301,6 +318,16 @@
             const whisperLangSelect = document.getElementById('maximus-whisper-lang');
             if (whisperLangSelect && data.whisper_language !== undefined) {
                 whisperLangSelect.value = data.whisper_language;
+            }
+
+            const whisperGpuCheck = document.getElementById('maximus-whisper-gpu');
+            if (whisperGpuCheck) {
+                whisperGpuCheck.checked = data.whisper_gpu !== false;
+            }
+
+            const whisperPreloadCheck = document.getElementById('maximus-whisper-preload');
+            if (whisperPreloadCheck) {
+                whisperPreloadCheck.checked = !!data.whisper_preload;
             }
         } catch (e) {
             console.error(DEBUG_PREFIX, 'Error loading settings:', e);
@@ -367,8 +394,10 @@
         const voiceSelect = document.getElementById('maximus-voice-select');
         const whisperModel = document.getElementById('maximus-whisper-model');
         const whisperLang = document.getElementById('maximus-whisper-lang');
+        const whisperGpu = document.getElementById('maximus-whisper-gpu');
+        const whisperPreload = document.getElementById('maximus-whisper-preload');
         const statusEl = document.getElementById('maximus-save-status');
-        if (!dirInput || !voiceSelect || !whisperModel || !whisperLang || !statusEl) return;
+        if (!dirInput || !voiceSelect || !whisperModel || !whisperLang || !whisperGpu || !whisperPreload || !statusEl) return;
 
         statusEl.className = 'maximus-status';
         statusEl.textContent = 'Guardando...';
@@ -382,7 +411,9 @@
                     kokoro_dir: dirInput.value.trim(),
                     voice: voiceSelect.value,
                     whisper_model: whisperModel.value,
-                    whisper_language: whisperLang.value
+                    whisper_language: whisperLang.value,
+                    whisper_gpu: whisperGpu.checked,
+                    whisper_preload: whisperPreload.checked
                 })
             });
 

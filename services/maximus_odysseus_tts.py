@@ -17,8 +17,11 @@ DEFAULT_KOKORO_SETTINGS = {
     "kokoro_dir": "/home/maximo/Código/maximus-odysseus/kokoro-v1.0",
     "voice": "em_alex",
     "whisper_model": "base",
-    "whisper_language": ""
+    "whisper_language": "",
+    "whisper_gpu": True,
+    "whisper_preload": False
 }
+
 
 
 SETTINGS_FILE = os.path.join(DATA_DIR, "maximus_odysseus_settings.json")
