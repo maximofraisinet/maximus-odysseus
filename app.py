@@ -656,6 +656,10 @@ app.include_router(setup_chatgpt_subscription_routes())
 from routes.tts_routes import setup_tts_routes
 app.include_router(setup_tts_routes(tts_service))
 
+# Maximus-Odysseus custom routes
+from routes.maximus_odysseus_routes import setup_maximus_odysseus_routes
+app.include_router(setup_maximus_odysseus_routes())
+
 # STT
 from services.stt import get_stt_service
 stt_service = get_stt_service()

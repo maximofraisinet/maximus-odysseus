@@ -101,4 +101,9 @@ docs/windows-port/
 compound.config.json
 *.error.log
 _scratch/
+
+# Local Kokoro models
+kokoro-v1.0/*
+!kokoro-v1.0/.gitkeep
+
 /odysseus/

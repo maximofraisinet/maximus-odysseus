@@ -43,6 +43,11 @@ qrcode[pil]
 croniter
 pytest
 pytest-asyncio
+kokoro-onnx
+soundfile
+faster-whisper
+av
+
 # starlette.testclient prefers httpx2 since Starlette 1.2.0 and warns on every
 # TestClient import when only classic httpx is present. Runtime code keeps
 # using `httpx` above; this is test-client only.
