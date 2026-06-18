@@ -151,6 +151,7 @@ class TaskCreate(BaseModel):
     endpoint_url: Optional[str] = None
     then_task_id: Optional[str] = None            # chain: run this task after success
     notifications_enabled: Optional[bool] = None  # None lets action-specific defaults apply
+    character_id: Optional[str] = None             # built-in persona id (PERSONAS) — biases output voice
 
 
 class TaskUpdate(BaseModel):
@@ -171,6 +172,7 @@ class TaskUpdate(BaseModel):
     endpoint_url: Optional[str] = None
     then_task_id: Optional[str] = None
     notifications_enabled: Optional[bool] = None
+    character_id: Optional[str] = None
 
 
 def _display_task_name(t: ScheduledTask) -> str:
@@ -203,6 +205,7 @@ def _task_to_dict(t: ScheduledTask, include_last_run_result: bool = False) -> di
         "output_target": t.output_target,
         "session_id": t.session_id,
         "crew_member_id": getattr(t, "crew_member_id", None),
+        "character_id": getattr(t, "character_id", None),
         "model": t.model,
         "endpoint_url": t.endpoint_url,
         "run_count": t.run_count or 0,
@@ -519,6 +522,15 @@ def setup_task_routes(task_scheduler) -> APIRouter:
                 else bool(req.notifications_enabled) if req.notifications_enabled is not None
                 else True
             )
+            # Validate chained task belongs to same owner
+            if req.then_task_id:
+                chain_target = db.query(ScheduledTask).filter(
+                    ScheduledTask.id == req.then_task_id
+                ).first()
+                if not chain_target:
+                    raise HTTPException(400, "Chained task not found")
+                if chain_target.owner != user:
+                    raise HTTPException(403, "Cannot chain to another user's task")
             task = ScheduledTask(
                 id=task_id,
                 owner=user,
@@ -543,6 +555,7 @@ def setup_task_routes(task_scheduler) -> APIRouter:
                 then_task_id=then_task_id,
                 webhook_token=webhook_token,
                 notifications_enabled=notifications_enabled,
+                character_id=(req.character_id or None),
             )
             db.add(task)
             db.commit()
@@ -696,6 +709,9 @@ def setup_task_routes(task_scheduler) -> APIRouter:
                 task.then_task_id = _validate_then_task_id(db, req.then_task_id, user, current_task_id=task.id)
             if req.notifications_enabled is not None:
                 task.notifications_enabled = bool(req.notifications_enabled)
+            if req.character_id is not None:
+                # Empty string clears the persona; non-empty stores the id.
+                task.character_id = req.character_id or None
             if req.cron_expression is not None:
                 if req.cron_expression:
                     try:
@@ -974,7 +990,7 @@ def setup_task_routes(task_scheduler) -> APIRouter:
             "tag", "label", "move", "archive", "delete", "mark", "schedule",
         )
         try:
-            from src.agent_tools import get_mcp_manager
+            from src.tool_utils import get_mcp_manager
             mcp = get_mcp_manager()
             if mcp:
                 for tool in mcp.get_all_tools():

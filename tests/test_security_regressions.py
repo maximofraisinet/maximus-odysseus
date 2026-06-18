@@ -233,6 +233,43 @@ def test_q_empty_input():
     assert _q(None) == '""'
 
 
+# ── provider auth error normalization ──────────────────────────
+
+def _import_friendly_email_auth_error():
+    sys.modules.pop("routes.email_helpers", None)
+    from routes.email_helpers import _friendly_email_auth_error  # noqa: WPS433
+    return _friendly_email_auth_error
+
+
+def test_outlook_smtp_basic_auth_error_is_actionable():
+    normalize = _import_friendly_email_auth_error()
+    msg = normalize(
+        "SMTP",
+        "smtp.office365.com",
+        "(535, b'5.7.139 Authentication unsuccessful, basic authentication is disabled.')",
+    )
+
+    assert "Microsoft no longer accepts normal mailbox passwords" in msg
+    assert "OAuth/Graph" in msg
+    assert "535" not in msg
+
+
+def test_outlook_imap_authenticate_failed_is_actionable():
+    normalize = _import_friendly_email_auth_error()
+    msg = normalize("IMAP", "outlook.office365.com", "b'AUTHENTICATE failed.'")
+
+    assert "Microsoft no longer accepts normal mailbox passwords" in msg
+    assert "Outlook/Office 365" in msg
+
+
+def test_generic_auth_error_still_passes_through_truncated():
+    normalize = _import_friendly_email_auth_error()
+    msg = normalize("IMAP", "imap.example.com", "bad credentials " + ("x" * 300))
+
+    assert msg.startswith("bad credentials")
+    assert len(msg) == 200
+
+
 # ── compose-upload path traversal block ─────────────────────────
 
 @pytest.mark.parametrize(
@@ -935,13 +972,25 @@ def test_mcp_oauth_page_escapes_reflected_values():
     src = Path(__file__).resolve().parents[1] / "routes" / "mcp_routes.py"
     text = src.read_text()
     body = text.split("def _oauth_authorize_page(", 1)[1].split("return f", 1)[0]
-    for var in ("auth_url", "server_id", "host"):
+    for var in ("auth_url", "server_id", "host", "redirect_uri"):
         assert f"{var} = html.escape({var}" in body, var
 
 
 def _import_mcp_routes():
     sys.modules.pop("routes.mcp_routes", None)
     return importlib.import_module("routes.mcp_routes")
+
+
+def test_google_mcp_oauth_uses_configured_redirect_base(monkeypatch):
+    monkeypatch.setenv("OAUTH_REDIRECT_BASE_URL", "https://odysseus.example/app/")
+    monkeypatch.delenv("APP_PUBLIC_URL", raising=False)
+    sys.modules.pop("src.mcp_oauth", None)
+    mcp_routes = _import_mcp_routes()
+
+    assert (
+        mcp_routes._mcp_oauth_redirect_uri()
+        == "https://odysseus.example/app/api/mcp/oauth/callback"
+    )
 
 
 def test_mcp_oauth_paths_resolve_under_data_dir(tmp_path, monkeypatch):
