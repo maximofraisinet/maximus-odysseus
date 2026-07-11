@@ -86,10 +86,11 @@ Bundled in `static/fonts/`:
 | [Fira Code](https://github.com/tonsky/FiraCode) | SIL Open Font License 1.1 | Nikita Prokopov & contributors |
 | [Inter](https://github.com/rsms/inter) | SIL Open Font License 1.1 | Rasmus Andersson |
 | [GohuFont](https://font.gohu.org/) (`fonts/custom/GohuFont.ttf`) | WTFPL | Hugo Chargois |
+| [OpenDyslexic](https://opendyslexic.org/) (`fonts/OpenDyslexic-{Regular,Bold}.woff2`) | SIL Open Font License 1.1 ([`licenses/OpenDyslexic-OFL.txt`](licenses/OpenDyslexic-OFL.txt)) | Abbie Gonzalez |
 
 ## Python dependencies
 
-Core (`requirements.txt`) and optional (`requirements-optional.txt`):
+Python dependencies (`requirements.txt`):
 
 | Package | License |
 |---|---|
@@ -148,14 +149,14 @@ concerns from earlier are resolved:
 - **PyMuPDF (AGPL-3.0)** is no longer a core dependency. It is **optional** and
   used *only* by the PDF form-filling feature (`src/pdf_forms.py` and the form
   endpoints in `routes/document_routes.py`), lazy-imported and listed in
-  `requirements-optional.txt`. The MIT core runs without it. If you choose to
+  `requirements.txt`. The MIT core runs without it. If you choose to
   install it, AGPL's network clause then applies to *that feature* for your
   deployment (Artifex also sells a commercial PyMuPDF license that lifts this).
 - **`caldav`** (Python lib) is **dual-licensed GPL-3.0-or-later OR Apache-2.0**.
   Odysseus uses it under **Apache-2.0**, which is permissive and MIT-compatible.
 - **`markitdown`** (Microsoft) is **MIT** and used only as an *optional* dependency for Office/EPUB text
   extraction (`src/markitdown_runtime.py`), lazy-imported with graceful fallback — the MIT core runs without
-  it. The cloud `az-doc-intel` extra is deliberately **not** installed, keeping extraction fully local.
+  it (both are included in `requirements.txt`). The cloud `az-doc-intel` extra is deliberately **not** installed, keeping extraction fully local.
 
 ---
 

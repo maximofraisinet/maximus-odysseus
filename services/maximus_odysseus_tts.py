@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 # Default settings
 DEFAULT_KOKORO_SETTINGS = {
-    "kokoro_dir": "/home/maximo/Código/maximus-odysseus/kokoro-v1.0",
+    "kokoro_dir": "kokoro-v1.0",
     "voice": "em_alex",
     "whisper_model": "base",
     "whisper_language": "",
