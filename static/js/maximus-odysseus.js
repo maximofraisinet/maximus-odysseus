@@ -192,15 +192,15 @@
         panel.innerHTML = `
             <div class="admin-card">
                 <h2><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;opacity:0.6"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>Maximus</h2>
-                <div class="admin-toggle-sub" style="margin-bottom:15px">Configura la ruta de la carpeta Kokoro v1.0, las voces y el modelo local de Whisper para la transcripción.</div>
+                <div class="admin-toggle-sub" style="margin-bottom:15px">Configure the path to the Kokoro v1.0 directory, available voices, and the local Whisper model for transcription.</div>
                 
-                <h3 style="font-size: 13px; font-weight: 600; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; color: var(--text-light, #9ca3af);">Texto a Voz (Kokoro TTS)</h3>
+                <h3 style="font-size: 13px; font-weight: 600; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; color: var(--text-light, #9ca3af);">Text-to-Speech (Kokoro TTS)</h3>
                 <div class="settings-col" style="margin-bottom: 20px;">
                     <div class="settings-row" style="margin-bottom:12px">
-                        <label class="settings-label">Directorio de Kokoro v1.0</label>
+                        <label class="settings-label">Kokoro v1.0 Directory</label>
                         <div style="display:flex; gap:8px; flex:1;">
-                            <input type="text" id="maximus-kokoro-dir" class="settings-input" placeholder="/ruta/absoluta/a/kokoro-v1.0" />
-                            <button type="button" id="maximus-load-voices-btn" class="settings-fallback-add" style="margin:0; padding:6px 12px; height:28px; display:inline-flex; align-items:center; cursor:pointer;">Cargar Voces</button>
+                            <input type="text" id="maximus-kokoro-dir" class="settings-input" placeholder="/absolute/path/to/kokoro-v1.0" />
+                            <button type="button" id="maximus-load-voices-btn" class="settings-fallback-add" style="margin:0; padding:6px 12px; height:28px; display:inline-flex; align-items:center; cursor:pointer;">Load Voices</button>
                         </div>
                     </div>
                     
@@ -210,61 +210,61 @@
                     </div>
                     
                     <div class="settings-row" style="margin-bottom:12px">
-                        <label class="settings-label">Voz Predeterminada</label>
+                        <label class="settings-label">Default Voice</label>
                         <select id="maximus-voice-select" class="settings-select" style="flex:1;"></select>
                     </div>
                 </div>
 
-                <h3 style="font-size: 13px; font-weight: 600; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; color: var(--text-light, #9ca3af);">Voz a Texto (Whisper STT)</h3>
+                <h3 style="font-size: 13px; font-weight: 600; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; color: var(--text-light, #9ca3af);">Speech-to-Text (Whisper STT)</h3>
                 <div class="settings-col">
                     <div class="settings-row" style="margin-bottom:12px">
-                        <label class="settings-label">Modelo de Whisper</label>
+                        <label class="settings-label">Whisper Model</label>
                         <select id="maximus-whisper-model" class="settings-select" style="flex:1;">
-                            <option value="tiny">tiny (Muy rápido, ~75MB)</option>
-                            <option value="tiny.en">tiny.en (Solo inglés, ~75MB)</option>
-                            <option value="base">base (Rápido, ~145MB) [Recomendado]</option>
-                            <option value="base.en">base.en (Solo inglés, ~145MB)</option>
-                            <option value="small">small (Preciso, ~460MB)</option>
-                            <option value="small.en">small.en (Solo inglés, ~460MB)</option>
-                            <option value="medium">medium (Muy preciso, ~1.5GB)</option>
-                            <option value="medium.en">medium.en (Solo inglés, ~1.5GB)</option>
-                            <option value="large-v1">large-v1 (Máxima calidad v1, ~3GB)</option>
-                            <option value="large-v2">large-v2 (Máxima calidad v2, ~3GB)</option>
-                            <option value="large-v3">large-v3 (Máxima calidad v3, ~3GB)</option>
-                            <option value="large">large (Equivalente a large-v3, ~3GB)</option>
+                            <option value="tiny">tiny (Very fast, ~75MB)</option>
+                            <option value="tiny.en">tiny.en (English only, ~75MB)</option>
+                            <option value="base">base (Fast, ~145MB) [Recommended]</option>
+                            <option value="base.en">base.en (English only, ~145MB)</option>
+                            <option value="small">small (Accurate, ~460MB)</option>
+                            <option value="small.en">small.en (English only, ~460MB)</option>
+                            <option value="medium">medium (Very accurate, ~1.5GB)</option>
+                            <option value="medium.en">medium.en (English only, ~1.5GB)</option>
+                            <option value="large-v1">large-v1 (Maximum quality v1, ~3GB)</option>
+                            <option value="large-v2">large-v2 (Maximum quality v2, ~3GB)</option>
+                            <option value="large-v3">large-v3 (Maximum quality v3, ~3GB)</option>
+                            <option value="large">large (Equivalent to large-v3, ~3GB)</option>
                         </select>
                     </div>
                     <div class="settings-row" style="margin-bottom:12px">
-                        <label class="settings-label">Idioma</label>
+                        <label class="settings-label">Language</label>
                         <select id="maximus-whisper-lang" class="settings-select" style="flex:1;">
-                            <option value="">Auto-detect (Detectar automáticamente)</option>
-                            <option value="es">Español (es)</option>
+                            <option value="">Auto-detect (Detect automatically)</option>
+                            <option value="es">Spanish (es)</option>
                             <option value="en">English (en)</option>
-                            <option value="fr">Français (fr)</option>
-                            <option value="de">Deutsch (de)</option>
-                            <option value="it">Italiano (it)</option>
-                            <option value="pt">Português (pt)</option>
-                            <option value="ja">日本語 (ja)</option>
-                            <option value="zh">中文 (zh)</option>
-                            <option value="ru">Русский (ru)</option>
-                            <option value="ko">한국어 (ko)</option>
-                            <option value="nl">Nederlands (nl)</option>
-                            <option value="pl">Polski (pl)</option>
+                            <option value="fr">French (fr)</option>
+                            <option value="de">German (de)</option>
+                            <option value="it">Italian (it)</option>
+                            <option value="pt">Portuguese (pt)</option>
+                            <option value="ja">Japanese (ja)</option>
+                            <option value="zh">Chinese (zh)</option>
+                            <option value="ru">Russian (ru)</option>
+                            <option value="ko">Korean (ko)</option>
+                            <option value="nl">Dutch (nl)</option>
+                            <option value="pl">Polish (pl)</option>
                                        </select>
                     </div>
                     <div class="settings-row" style="margin-bottom:12px; display:flex; align-items:center;">
-                        <label class="settings-label">Aceleración por GPU (CUDA)</label>
+                        <label class="settings-label">GPU Acceleration (CUDA)</label>
                         <div style="flex:1; display:flex; align-items:center;">
-                            <label class="admin-switch" title="Usar la GPU para acelerar la transcripción si está disponible">
+                            <label class="admin-switch" title="Use GPU to accelerate transcription if available">
                                 <input type="checkbox" id="maximus-whisper-gpu" checked />
                                 <span class="admin-slider"></span>
                             </label>
                         </div>
                     </div>
                     <div class="settings-row" style="margin-bottom:12px; display:flex; align-items:center;">
-                        <label class="settings-label">Precargar modelo al inicio</label>
+                        <label class="settings-label">Preload model at startup</label>
                         <div style="flex:1; display:flex; align-items:center;">
-                            <label class="admin-switch" title="Cargar el modelo Whisper en memoria nada más iniciar la aplicación">
+                            <label class="admin-switch" title="Load the Whisper model into memory as soon as the application starts">
                                 <input type="checkbox" id="maximus-whisper-preload" />
                                 <span class="admin-slider"></span>
                             </label>
@@ -274,7 +274,7 @@
 
                 <div style="margin-top:20px; border-top:1px solid var(--border); padding-top:15px; display:flex; align-items:center; gap:12px;">
                     <button type="button" id="maximus-save-settings-btn" class="settings-fallback-add" style="margin:0; padding:6px 16px; border-color:var(--primary, #3b82f6); color:var(--primary, #3b82f6); cursor:pointer;">
-                        Guardar Configuración
+                        Save Settings
                     </button>
                     <span id="maximus-save-status" class="maximus-status"></span>
                 </div>
@@ -343,7 +343,7 @@
         statusEl.className = 'maximus-status';
         statusEl.style.display = 'none';
         if (statusRow) statusRow.style.display = 'none';
-        selectEl.innerHTML = '<option value="">Cargando voces...</option>';
+        selectEl.innerHTML = '<option value="">Loading voices...</option>';
 
         try {
             let url = '/api/maximus-odysseus/voices';
@@ -354,14 +354,14 @@
             const res = await fetch(url);
             if (!res.ok) {
                 const err = await res.json();
-                throw new Error(err.detail || 'Falta voices-v1.0.bin o ruta incorrecta.');
+                throw new Error(err.detail || 'Missing voices-v1.0.bin or incorrect path.');
             }
             
             const voices = await res.json();
             selectEl.innerHTML = '';
             
             if (voices.length === 0) {
-                selectEl.innerHTML = '<option value="">No se encontraron voces</option>';
+                selectEl.innerHTML = '<option value="">No voices found</option>';
                 return;
             }
 
@@ -375,13 +375,13 @@
                 selectEl.appendChild(opt);
             });
 
-            statusEl.textContent = 'Directorio y voces cargadas correctamente.';
+            statusEl.textContent = 'Directory and voices loaded successfully.';
             statusEl.className = 'maximus-status success';
             statusEl.style.display = 'block';
             if (statusRow) statusRow.style.display = 'flex';
         } catch (e) {
             console.error(DEBUG_PREFIX, 'Error loading voices:', e);
-            selectEl.innerHTML = '<option value="">Fallo al cargar voces</option>';
+            selectEl.innerHTML = '<option value="">Failed to load voices</option>';
             statusEl.textContent = e.message;
             statusEl.className = 'maximus-status error';
             statusEl.style.display = 'block';
@@ -400,7 +400,7 @@
         if (!dirInput || !voiceSelect || !whisperModel || !whisperLang || !whisperGpu || !whisperPreload || !statusEl) return;
 
         statusEl.className = 'maximus-status';
-        statusEl.textContent = 'Guardando...';
+        statusEl.textContent = 'Saving...';
         statusEl.style.display = 'inline-block';
 
         try {
@@ -419,10 +419,10 @@
 
             if (!res.ok) {
                 const err = await res.json();
-                throw new Error(err.detail || 'Fallo al guardar.');
+                throw new Error(err.detail || 'Failed to save.');
             }
 
-            statusEl.textContent = '¡Guardado con éxito!';
+            statusEl.textContent = 'Saved successfully!';
             statusEl.className = 'maximus-status success';
             setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
             
@@ -447,7 +447,7 @@
         btn.type = 'button';
         btn.className = 'input-icon-btn';
         btn.id = 'maximus-tts-toggle-btn';
-        btn.title = 'Lectura automática (Kokoro TTS)';
+        btn.title = 'Read aloud (Kokoro TTS)';
         btn.setAttribute('aria-pressed', 'false');
         btn.setAttribute('data-mode-tool', 'true');
         
@@ -560,7 +560,7 @@
 
                     if (!response.ok) {
                         const err = await response.json();
-                        throw new Error(err.detail || 'Fallo la síntesis en el servidor.');
+                        throw new Error(err.detail || 'Server synthesis failed.');
                     }
 
                     const audioBlob = await response.blob();
@@ -817,12 +817,12 @@
             } else {
                 // Check secure context
                 if (!window.isSecureContext) {
-                    showToast('El dictado por voz requiere un contexto seguro (HTTPS o localhost).');
+                    showToast('Voice dictation requires a secure context (HTTPS or localhost).');
                     return;
                 }
 
                 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    showToast('Tu navegador no soporta el acceso al micrófono.');
+                    showToast('Your browser does not support microphone access.');
                     return;
                 }
 
@@ -846,7 +846,7 @@
                         btn.classList.add('maximus-loading');
                         btn.disabled = true;
                         btn.innerHTML = `<svg class="maximus-loading-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>`;
-                        showToast('Transcribiendo audio...', 4000);
+                        showToast('Transcribing audio...', 4000);
 
                         try {
                             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
@@ -860,19 +860,19 @@
 
                             if (!res.ok) {
                                 const err = await res.json().catch(() => ({}));
-                                throw new Error(err.detail?.message || 'Error en la transcripción');
+                                throw new Error(err.detail?.message || 'Transcription error');
                             }
 
                             const data = await res.json();
                             if (data.text && data.text.trim()) {
                                 insertTextAtCursor(data.text.trim());
-                                showToast('Dictado finalizado');
+                                showToast('Dictation finished');
                             } else {
-                                showToast('No se detectó voz hablada');
+                                showToast('No spoken voice detected');
                             }
                         } catch (err) {
                             console.error(DEBUG_PREFIX, 'Whisper transcription failed:', err);
-                            showToast('Fallo la transcripción: ' + err.message);
+                            showToast('Transcription failed: ' + err.message);
                         } finally {
                             btn.classList.remove('maximus-loading');
                             btn.disabled = false;
@@ -884,13 +884,13 @@
                     mediaRecorder.start();
                     isRecording = true;
                     btn.classList.add('maximus-recording');
-                    showToast('Escuchando... pulsa de nuevo para transcribir');
+                    showToast('Listening... press again to transcribe');
                 } catch (err) {
                     console.error(DEBUG_PREFIX, 'Microphone start error:', err);
                     if (err.name === 'NotAllowedError') {
-                        showToast('Permiso de micrófono denegado');
+                        showToast('Microphone permission denied');
                     } else {
-                        showToast('Error de micrófono: ' + err.message);
+                        showToast('Microphone error: ' + err.message);
                     }
                     isRecording = false;
                 }

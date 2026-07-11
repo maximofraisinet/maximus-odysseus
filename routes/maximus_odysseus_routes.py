@@ -50,16 +50,16 @@ def setup_maximus_odysseus_routes():
             
             # Validation
             if not kokoro_dir:
-                raise HTTPException(status_code=400, detail="El directorio de Kokoro no puede estar vacío.")
+                raise HTTPException(status_code=400, detail="Kokoro directory cannot be empty.")
             if not os.path.exists(kokoro_dir):
-                raise HTTPException(status_code=400, detail=f"El directorio especificado no existe: {kokoro_dir}")
+                raise HTTPException(status_code=400, detail=f"The specified directory does not exist: {kokoro_dir}")
                 
             model_path = os.path.join(kokoro_dir, "kokoro-v1.0.onnx")
             voices_path = os.path.join(kokoro_dir, "voices-v1.0.bin")
             if not os.path.exists(model_path) or not os.path.exists(voices_path):
                 raise HTTPException(
                     status_code=400, 
-                    detail="El directorio debe contener los archivos 'kokoro-v1.0.onnx' y 'voices-v1.0.bin'."
+                    detail="The directory must contain the files 'kokoro-v1.0.onnx' and 'voices-v1.0.bin'."
                 )
                 
             old_settings = get_maximus_odysseus_settings()
@@ -81,7 +81,7 @@ def setup_maximus_odysseus_routes():
                 "whisper_gpu": whisper_gpu,
                 "whisper_preload": whisper_preload
             })
-            return {"success": True, "message": "Configuración guardada correctamente."}
+            return {"success": True, "message": "Settings saved successfully."}
         except HTTPException:
             raise
         except Exception as e:
@@ -97,13 +97,13 @@ def setup_maximus_odysseus_routes():
                 path = settings.get("kokoro_dir")
                 
             if not path or not os.path.exists(path):
-                raise HTTPException(status_code=400, detail="El directorio configurado no existe.")
+                raise HTTPException(status_code=400, detail="The configured directory does not exist.")
                 
             voices_file = os.path.join(path, "voices-v1.0.bin")
             if not os.path.exists(voices_file):
                 raise HTTPException(
                     status_code=400, 
-                    detail="No se encontró el archivo 'voices-v1.0.bin' en el directorio especificado."
+                    detail="The 'voices-v1.0.bin' file was not found in the specified directory."
                 )
                 
             return get_kokoro_voices(path)
@@ -120,16 +120,16 @@ def setup_maximus_odysseus_routes():
         """Synthesize clean text using Kokoro ONNX and return WAV stream"""
         try:
             if not request.text.strip():
-                raise HTTPException(status_code=400, detail="El texto a sintetizar no puede estar vacío.")
+                raise HTTPException(status_code=400, detail="The text to synthesize cannot be empty.")
             if not request.voice.strip():
-                raise HTTPException(status_code=400, detail="Se debe especificar una voz.")
+                raise HTTPException(status_code=400, detail="A voice must be specified.")
                 
             # Perform synthesis
             wav_bytes = synthesize_speech(request.text, request.voice)
             if not wav_bytes:
                 raise HTTPException(
                     status_code=500,
-                    detail="Falló la síntesis de audio (el texto resultante tras la limpieza quedó vacío o el modelo no está cargado)."
+                    detail="Audio synthesis failed (the clean text became empty or the model is not loaded)."
                 )
                 
             return Response(
@@ -142,9 +142,9 @@ def setup_maximus_odysseus_routes():
         except HTTPException:
             raise
         except FileNotFoundError as e:
-            raise HTTPException(status_code=400, detail=f"Error al cargar el modelo: {str(e)}")
+            raise HTTPException(status_code=400, detail=f"Error loading model: {str(e)}")
         except Exception as e:
             logger.error(f"Synthesis error: {e}", exc_info=True)
-            raise HTTPException(status_code=500, detail=f"Error durante la síntesis: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Error during synthesis: {str(e)}")
 
     return router
