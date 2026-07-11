@@ -286,8 +286,8 @@ To expose Odysseus on a local network or Tailscale with HTTPS:
    ```
 4. Install the `mkcert` CA on any other device you want to access Odysseus from (e.g., for iOS, email the `rootCA.pem` to yourself, install the profile, and trust it in Certificate Trust Settings).
 
-### Optional Dependencies
-`requirements-optional.txt` contains packages that unlock extra features. It is not installed by default.
+### Dependencies
+All dependencies, including optional features, are now unified in a single `requirements.txt` file for simplicity.
 
 | Package | Feature unlocked |
 |---------|-----------------|
@@ -295,6 +295,7 @@ To expose Odysseus on a local network or Tailscale with HTTPS:
 | `ddgs` | DuckDuckGo as a search provider option. |
 | `PyMuPDF` | PDF page rendering in the side viewer panel and form-filling. (Note: AGPL-3.0) |
 | `markitdown` | Office/EPUB document text extraction (converts .docx/.xlsx/.pptx/.xls/.epub to Markdown). |
+
 
 ### Faster, reproducible installs with uv (optional)
 [uv](https://docs.astral.sh/uv/) works as a drop-in replacement for the

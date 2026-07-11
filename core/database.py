@@ -3,7 +3,7 @@ import logging
 import sqlite3
 from datetime import datetime, timezone
 from sqlalchemy import event, create_engine, Column, String, Text, Boolean, DateTime, Integer, ForeignKey, JSON, Index, func, text
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship, sessionmaker, backref
@@ -32,6 +32,12 @@ class TimestampMixin:
 # Get database URL from environment, default to SQLite in DATA_DIR
 from src.constants import DATA_DIR, AUTH_FILE, MEMORY_FILE, USER_PREFS_FILE, SETTINGS_FILE
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DATA_DIR}/app.db")
+
+# Ensure parent directory exists for SQLite database
+url = make_url(DATABASE_URL)
+if url.drivername.startswith("sqlite"):
+    if url.database and url.database != ":memory:":
+        os.makedirs(os.path.dirname(os.path.abspath(url.database)), exist_ok=True)
 
 # Create engine
 engine = create_engine(

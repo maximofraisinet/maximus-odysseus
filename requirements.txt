@@ -52,3 +52,8 @@ av
 # TestClient import when only classic httpx is present. Runtime code keeps
 # using `httpx` above; this is test-client only.
 httpx2
+
+# Optional dependencies merged to simplify installation:
+ddgs
+PyMuPDF
+markitdown[docx,pptx,xlsx,xls]==0.1.6
