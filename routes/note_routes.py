@@ -10,7 +10,8 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from core.database import SessionLocal, Note
-from src.auth_helpers import get_current_user
+from core.middleware import INTERNAL_TOOL_USER
+from src.auth_helpers import require_user
 from src.constants import DATA_DIR
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -334,10 +335,11 @@ async def dispatch_reminder(
             # Loud diagnostic so we can see WHY a reminder didn't send (the
             # previous "silently no-op when cfg has no smtp_host" was invisible).
             logger.info(
-                f"dispatch_reminder[email] note_id={note_id} owner={owner!r} "
-                f"smtp_host={cfg.get('smtp_host')!r} smtp_user={cfg.get('smtp_user')!r} "
-                f"from={from_addr!r} recipient={recipient!r} "
-                f"account_name={cfg.get('account_name')!r}"
+                "dispatch_reminder[email] note_id=%s owner=%r "
+                "has_smtp_host=%s has_smtp_user=%s has_from=%s has_recipient=%s",
+                note_id, owner,
+                bool(cfg.get("smtp_host")), bool(cfg.get("smtp_user")),
+                bool(from_addr), bool(recipient),
             )
             missing = []
             if not cfg.get("smtp_host"):
@@ -481,11 +483,22 @@ async def dispatch_reminder(
                 api_key = intg.get("api_key", "")
                 if api_key:
                     hdrs["Authorization"] = f"Bearer {api_key}"
-                async with httpx.AsyncClient(timeout=10.0) as client:
-                    resp = await client.post(f"{base}/{topic}", content=ntfy_body, headers=hdrs)
-                    ntfy_sent = resp.is_success
-                    if not ntfy_sent:
-                        ntfy_error = f"ntfy returned HTTP {resp.status_code}"
+                # SSRF guard — same check (and env knob) as the webhook branch
+                # above: link-local / metadata addresses are always rejected;
+                # REMINDER_WEBHOOK_BLOCK_PRIVATE_IPS=true also blocks RFC-1918
+                # so a ntfy base_url can't be pointed at internal services.
+                import os as _os
+                from src.url_safety import check_outbound_url as _chk
+                _block = _os.getenv("REMINDER_WEBHOOK_BLOCK_PRIVATE_IPS", "false").lower() == "true"
+                _ok, _reason = _chk(f"{base}/{topic}", block_private=_block)
+                if not _ok:
+                    ntfy_error = f"ntfy URL rejected: {_reason}"
+                else:
+                    async with httpx.AsyncClient(timeout=10.0) as client:
+                        resp = await client.post(f"{base}/{topic}", content=ntfy_body, headers=hdrs)
+                        ntfy_sent = resp.is_success
+                        if not ntfy_sent:
+                            ntfy_error = f"ntfy returned HTTP {resp.status_code}"
             else:
                 ntfy_error = "No enabled ntfy integration"
         except Exception as e:
@@ -570,10 +583,19 @@ def setup_note_routes(task_scheduler=None):
     router = APIRouter(prefix="/api/notes", tags=["notes"])
 
     def _owner(request: Request) -> Optional[str]:
-        return get_current_user(request)
+        # require_user, not bare get_current_user: a request that reaches
+        # these owner-scoped routes with NO identity (auth-middleware
+        # regression, SSRF from a sibling service) must fail closed (401)
+        # when auth is configured — not be treated as the single-user mode
+        # and handed blanket access to every account's notes. The documented
+        # anonymous modes (AUTH_ENABLED=false, LOCALHOST_BYPASS on loopback,
+        # unconfigured first-run) still resolve to None, the single-user
+        # path. fire_reminder below already gated this way; the CRUD routes
+        # did not.
+        return require_user(request) or None
 
     def _is_admin_or_single_user(request: Request, user: str | None) -> bool:
-        if user == "internal-tool":
+        if user == INTERNAL_TOOL_USER:
             return True
         if not user:
             # require_user() already admitted this request, which only happens
@@ -805,8 +827,7 @@ def setup_note_routes(task_scheduler=None):
         Returns {synthesis, email_sent}.
         """
         # Gate against anonymous callers — LLM synthesis can burn tokens.
-        from src.auth_helpers import require_user as _ru
-        user = _ru(request)
+        user = require_user(request)
         body = await request.json()
         note_id = str(body.get("note_id") or "").strip()
         if not note_id:

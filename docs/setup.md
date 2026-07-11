@@ -15,7 +15,7 @@ On first setup, Odysseus creates an admin account (`admin` unless
 For Docker installs, the same line is in `docker compose logs odysseus`.
 Use that for the first login, then change it in **Settings**.
 
-Contributing? See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, testing, and
+Contributing? See [CONTRIBUTING.md](../CONTRIBUTING.md) for setup, testing, and
 pull request guidelines.
 
 ### Docker (recommended)
@@ -97,6 +97,33 @@ Odysseus SSH key and add the public key to the remote server's
 
 ```bash
 ssh-copy-id -i data/ssh/id_ed25519.pub user@server
+```
+
+**Host Docker access (explicit opt-in).** Default Docker Compose intentionally
+does not mount `/var/run/docker.sock`. You can still connect Odysseus to
+existing Ollama, vLLM, and other OpenAI-compatible endpoints without Docker
+socket access.
+
+Cookbook/local Docker-daemon management requires the opt-in overlay below. Raw
+Docker socket access is high-trust because it can effectively grant broad
+control over the host Docker daemon. Remote server Docker workflows over SSH
+remain preferred.
+
+Place these values in `.env`, or export them in the shell before running
+`docker compose`:
+
+```bash
+COMPOSE_FILE=docker-compose.yml:docker/host-docker.yml
+DOCKER_GID=<host docker group gid>
+```
+
+Combine host Docker access with a GPU overlay when both are intentionally
+required:
+
+```bash
+COMPOSE_FILE=docker-compose.yml:docker/gpu.nvidia.yml:docker/host-docker.yml
+# or
+COMPOSE_FILE=docker-compose.yml:docker/gpu.amd.yml:docker/host-docker.yml
 ```
 
 **Docker GPU overlays.** CPU-only users can skip this section. Cookbook can
@@ -249,6 +276,19 @@ python -m uvicorn app:app --host 127.0.0.1 --port 7000
 
 If `python` points at an older interpreter, use `py -3.12` (or another installed
 3.11+ version) for the venv step.
+
+**Exposing on a LAN/Tailscale (Windows):** the launcher binds to `127.0.0.1` and
+does **not** read `APP_BIND` / `ODYSSEUS_HOST` from `.env`, so editing `.env`
+alone leaves the native Windows server on loopback. Pass the launcher's
+`-BindHost` flag instead:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\launch-windows.ps1 -BindHost 0.0.0.0
+```
+
+The manual `uvicorn` command takes the same address as `--host 0.0.0.0`. Bind
+outside loopback only for a trusted LAN/VPN such as Tailscale: keep
+`AUTH_ENABLED=true` and do not expose the port directly to the public internet.
 
 **Requirements:** Python 3.11+. The core app (chat, agent, memory, documents,
 email, calendar, deep research) runs fully native. For full **Cookbook** background
@@ -423,4 +463,4 @@ All user data lives in `data/` (gitignored): `app.db` (sessions, messages, docum
 `memory.json`, `presets.json`, `uploads/`, `personal_docs/`, `chroma/`, `settings.json`.
 
 To back up or restore everything in `data/`, see the
-[Backup & Restore guide](docs/backup-restore.md).
+[Backup & Restore guide](backup-restore.md).
