@@ -27,15 +27,44 @@ class STTService:
 
     # ── Settings ──
 
-    def _load_settings(self) -> dict:
+    def _load_settings(self, for_stats: bool = False) -> dict:
         from src.settings import load_settings
         saved = load_settings()
+        
+        stt_enabled = saved.get("stt_enabled", False)
+        stt_provider = saved.get("stt_provider", "disabled")
+        stt_model = saved.get("stt_model", "base")
+        stt_language = saved.get("stt_language", "")
+        
+        # Load Maximus settings
+        from services.maximus_odysseus_tts import get_maximus_odysseus_settings
+        try:
+            maximus = get_maximus_odysseus_settings()
+            whisper_gpu = maximus.get("whisper_gpu", True)
+            whisper_preload = maximus.get("whisper_preload", False)
+        except Exception:
+            whisper_gpu = True
+            whisper_preload = False
+        
+        if not for_stats:
+            # For actual transcription and backend availability checks, always allow local Whisper via Maximus settings
+            try:
+                stt_enabled = True
+                stt_provider = "local"
+                stt_model = maximus.get("whisper_model", "base")
+                stt_language = maximus.get("whisper_language", "")
+            except Exception:
+                pass
+                
         return {
-            "stt_enabled": saved.get("stt_enabled", False),
-            "stt_provider": saved.get("stt_provider", "disabled"),
-            "stt_model": saved.get("stt_model", "base"),
-            "stt_language": saved.get("stt_language", ""),
+            "stt_enabled": stt_enabled,
+            "stt_provider": stt_provider,
+            "stt_model": stt_model,
+            "stt_language": stt_language,
+            "whisper_gpu": whisper_gpu,
+            "whisper_preload": whisper_preload,
         }
+
 
     @property
     def available(self) -> bool:
@@ -48,6 +77,16 @@ class STTService:
         if provider == "browser":
             return True  # handled client-side
         if provider == "local":
+            preload = settings.get("whisper_preload", False)
+            if not preload:
+                # Lazy loading mode: only check if faster_whisper package is available
+                # without actually instantiating the model or loading weights.
+                try:
+                    from faster_whisper import WhisperModel
+                    return True
+                except Exception:
+                    return False
+            # Otherwise, instantiate/warmup model to verify availability
             return self._get_whisper() is not None
         if provider.startswith("endpoint:"):
             return True  # assume reachable
@@ -65,23 +104,30 @@ class STTService:
             try:
                 settings = self._load_settings()
                 model_size = settings.get("stt_model", "base")
-                # faster-whisper runs on CTranslate2, not torch. torch is only
-                # used (optionally) to detect a CUDA device for acceleration —
-                # if it's missing or unusable we just run on CPU. Keeping this
-                # probe separate (and tolerant of any failure, e.g. a broken
-                # CUDA/torch install that raises OSError on import) means a
-                # torch-less or torch-broken machine still does CPU
-                # transcription instead of failing with a misleading
-                # "faster-whisper not installed" error.
-                try:
-                    import torch
-                    use_cuda = torch.cuda.is_available()
-                except Exception:
-                    use_cuda = False
+                whisper_gpu = settings.get("whisper_gpu", True)
+                
+                # Check for CUDA availability if GPU acceleration is enabled
+                use_cuda = False
+                if whisper_gpu:
+                    try:
+                        import torch
+                        use_cuda = torch.cuda.is_available()
+                    except Exception:
+                        use_cuda = False
+                        
                 device = "cuda" if use_cuda else "cpu"
                 compute_type = "float16" if device == "cuda" else "int8"
-                self._whisper_model = WhisperModel(model_size, device=device, compute_type=compute_type)
-                logger.info(f"faster-whisper model '{model_size}' loaded on {device}")
+                
+                try:
+                    self._whisper_model = WhisperModel(model_size, device=device, compute_type=compute_type)
+                    logger.info(f"faster-whisper model '{model_size}' loaded on {device}")
+                except Exception as cuda_ex:
+                    if device == "cuda":
+                        logger.warning(f"Failed to load whisper model on CUDA ({cuda_ex}). Falling back to CPU...")
+                        self._whisper_model = WhisperModel(model_size, device="cpu", compute_type="int8")
+                        logger.info(f"faster-whisper model '{model_size}' successfully loaded on CPU fallback")
+                    else:
+                        raise cuda_ex
             except Exception as e:
                 logger.error(f"Failed to load whisper model: {e}")
                 return None
@@ -174,7 +220,7 @@ class STTService:
             return None
 
     def get_stats(self) -> Dict[str, Any]:
-        settings = self._load_settings()
+        settings = self._load_settings(for_stats=True)
         provider = settings["stt_provider"]
         stt_enabled = settings.get("stt_enabled", False)
         # If toggle is off, report as disabled
@@ -188,14 +234,23 @@ class STTService:
         }
 
         if provider == "local":
-            whisper = self._get_whisper()
-            stats["model_loaded"] = whisper is not None
+            preload = settings.get("whisper_preload", False)
+            if preload:
+                whisper = self._get_whisper()
+                stats["model_loaded"] = whisper is not None
+            else:
+                stats["model_loaded"] = self._whisper_model is not None
         elif provider == "browser":
             stats["model"] = "Browser (Web Speech API)"
         elif provider.startswith("endpoint:"):
             stats["endpoint_id"] = provider.split(":", 1)[1]
 
         return stats
+
+    def invalidate_whisper_model(self) -> None:
+        """Reset the cached local Whisper model."""
+        self._whisper_model = None
+        logger.info("Local Whisper model cache invalidated")
 
 
 # Module-level singleton
@@ -206,3 +261,4 @@ def get_stt_service() -> STTService:
     if _stt_service is None:
         _stt_service = STTService()
     return _stt_service
+

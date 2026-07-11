@@ -4,7 +4,7 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from sqlalchemy import event, create_engine, Column, String, Text, Boolean, DateTime, Integer, ForeignKey, JSON, Index, func, text
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship, sessionmaker, backref
@@ -52,6 +52,12 @@ def _normalize_sqlite_url(url: str) -> str:
 
 # Get database URL from environment, default to SQLite in DATA_DIR
 DATABASE_URL = _normalize_sqlite_url(os.getenv("DATABASE_URL", _default_database_url()))
+
+# Ensure parent directory exists for SQLite database
+url = make_url(DATABASE_URL)
+if url.drivername.startswith("sqlite"):
+    if url.database and url.database != ":memory:":
+        os.makedirs(os.path.dirname(os.path.abspath(url.database)), exist_ok=True)
 
 # Create engine
 engine = create_engine(
