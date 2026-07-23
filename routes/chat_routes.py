@@ -753,6 +753,7 @@ def setup_chat_routes(
             last_user_message=message,
         )
         allow_tool_preprocessing = not pre_context_tool_policy.block_all_tool_calls
+        _explicit_web_intent = pre_context_tool_policy.explicit_web_intent
 
         # Build shared context (stream path uses enhanced_message for context preface)
         ctx = await build_chat_context(
