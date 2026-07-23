@@ -215,56 +215,50 @@
                     </div>
                 </div>
 
-                <h3 style="font-size: 13px; font-weight: 600; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; color: var(--text-light, #9ca3af);">Speech-to-Text (Whisper STT)</h3>
+                <h3 style="font-size: 13px; font-weight: 600; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; color: var(--text-light, #9ca3af);">Speech-to-Text</h3>
                 <div class="settings-col">
                     <div class="settings-row" style="margin-bottom:12px">
-                        <label class="settings-label">Whisper Model</label>
-                        <select id="maximus-whisper-model" class="settings-select" style="flex:1;">
-                            <option value="tiny">tiny (Very fast, ~75MB)</option>
-                            <option value="tiny.en">tiny.en (English only, ~75MB)</option>
-                            <option value="base">base (Fast, ~145MB) [Recommended]</option>
-                            <option value="base.en">base.en (English only, ~145MB)</option>
-                            <option value="small">small (Accurate, ~460MB)</option>
-                            <option value="small.en">small.en (English only, ~460MB)</option>
-                            <option value="medium">medium (Very accurate, ~1.5GB)</option>
-                            <option value="medium.en">medium.en (English only, ~1.5GB)</option>
-                            <option value="large-v1">large-v1 (Maximum quality v1, ~3GB)</option>
-                            <option value="large-v2">large-v2 (Maximum quality v2, ~3GB)</option>
-                            <option value="large-v3">large-v3 (Maximum quality v3, ~3GB)</option>
-                            <option value="large">large (Equivalent to large-v3, ~3GB)</option>
+                        <label class="settings-label">Motor STT</label>
+                        <select id="maximus-stt-engine" class="settings-select" style="flex:1;">
+                            <option value="whisper">Whisper (Local, alta precisión)</option>
+                            <option value="canary">Canary (Local NeMo, ASR y Traducción, ~280MB)</option>
                         </select>
                     </div>
                     <div class="settings-row" style="margin-bottom:12px">
-                        <label class="settings-label">Language</label>
-                        <select id="maximus-whisper-lang" class="settings-select" style="flex:1;">
-                            <option value="">Auto-detect (Detect automatically)</option>
-                            <option value="es">Spanish (es)</option>
-                            <option value="en">English (en)</option>
-                            <option value="fr">French (fr)</option>
-                            <option value="de">German (de)</option>
-                            <option value="it">Italian (it)</option>
-                            <option value="pt">Portuguese (pt)</option>
-                            <option value="ja">Japanese (ja)</option>
-                            <option value="zh">Chinese (zh)</option>
-                            <option value="ru">Russian (ru)</option>
-                            <option value="ko">Korean (ko)</option>
-                            <option value="nl">Dutch (nl)</option>
-                            <option value="pl">Polish (pl)</option>
-                                       </select>
+                        <label class="settings-label">Modelo STT</label>
+                        <select id="maximus-stt-model" class="settings-select" style="flex:1;">
+                            <!-- Dynamic options -->
+                        </select>
                     </div>
-                    <div class="settings-row" style="margin-bottom:12px; display:flex; align-items:center;">
-                        <label class="settings-label">GPU Acceleration (CUDA)</label>
+                    <div class="settings-row" style="margin-bottom:12px" id="maximus-stt-lang-row">
+                        <label class="settings-label">Idioma</label>
+                        <select id="maximus-whisper-lang" class="settings-select" style="flex:1;">
+                            <option value="">Auto-detect / Predeterminado</option>
+                            <option value="es">Español (es)</option>
+                            <option value="en">English (en)</option>
+                            <option value="fr">Français (fr)</option>
+                            <option value="de">Deutsch (de)</option>
+                            <option value="it">Italiano (it)</option>
+                            <option value="pt">Português (pt)</option>
+                            <option value="ja">日本語 (ja)</option>
+                            <option value="zh">中文 (zh)</option>
+                            <option value="ru">Русский (ru)</option>
+                            <option value="ko">한국어 (ko)</option>
+                        </select>
+                    </div>
+                    <div class="settings-row" style="margin-bottom:12px; display:flex; align-items:center;" id="maximus-stt-gpu-row">
+                        <label class="settings-label">Aceleración por GPU (CUDA)</label>
                         <div style="flex:1; display:flex; align-items:center;">
-                            <label class="admin-switch" title="Use GPU to accelerate transcription if available">
+                            <label class="admin-switch" title="Usar la GPU para acelerar la transcripción si está disponible">
                                 <input type="checkbox" id="maximus-whisper-gpu" checked />
                                 <span class="admin-slider"></span>
                             </label>
                         </div>
                     </div>
-                    <div class="settings-row" style="margin-bottom:12px; display:flex; align-items:center;">
-                        <label class="settings-label">Preload model at startup</label>
+                    <div class="settings-row" style="margin-bottom:12px; display:flex; align-items:center;" id="maximus-stt-preload-row">
+                        <label class="settings-label">Precargar modelo al inicio</label>
                         <div style="flex:1; display:flex; align-items:center;">
-                            <label class="admin-switch" title="Load the Whisper model into memory as soon as the application starts">
+                            <label class="admin-switch" title="Cargar el modelo Whisper en memoria nada más iniciar la aplicación">
                                 <input type="checkbox" id="maximus-whisper-preload" />
                                 <span class="admin-slider"></span>
                             </label>
@@ -274,7 +268,7 @@
 
                 <div style="margin-top:20px; border-top:1px solid var(--border); padding-top:15px; display:flex; align-items:center; gap:12px;">
                     <button type="button" id="maximus-save-settings-btn" class="settings-fallback-add" style="margin:0; padding:6px 16px; border-color:var(--primary, #3b82f6); color:var(--primary, #3b82f6); cursor:pointer;">
-                        Save Settings
+                        Guardar Configuración
                     </button>
                     <span id="maximus-save-status" class="maximus-status"></span>
                 </div>
@@ -294,7 +288,58 @@
             loadVoices(dir);
         });
 
+        const engineSelect = panel.querySelector('#maximus-stt-engine');
+        if (engineSelect) {
+            engineSelect.addEventListener('change', (e) => {
+                updateModelOptions(e.target.value);
+            });
+        }
+
         panel.querySelector('#maximus-save-settings-btn').addEventListener('click', saveSettings);
+    }
+
+    function updateModelOptions(engine, selectedModel = null) {
+        const modelSelect = document.getElementById('maximus-stt-model');
+        const langRow = document.getElementById('maximus-stt-lang-row');
+        const gpuRow = document.getElementById('maximus-stt-gpu-row');
+        const preloadRow = document.getElementById('maximus-stt-preload-row');
+        if (!modelSelect) return;
+
+        modelSelect.innerHTML = '';
+
+        if (engine === 'whisper') {
+            const options = [
+                { value: 'tiny', text: 'tiny (Muy rápido, ~75MB)' },
+                { value: 'tiny.en', text: 'tiny.en (Solo inglés, ~75MB)' },
+                { value: 'base', text: 'base (Rápido, ~145MB) [Recomendado]' },
+                { value: 'base.en', text: 'base.en (Solo inglés, ~145MB)' },
+                { value: 'small', text: 'small (Preciso, ~460MB)' },
+                { value: 'small.en', text: 'small.en (Solo inglés, ~460MB)' },
+                { value: 'medium', text: 'medium (Muy preciso, ~1.5GB)' },
+                { value: 'medium.en', text: 'medium.en (Solo inglés, ~1.5GB)' },
+                { value: 'large-v3', text: 'large-v3 (Máxima calidad, ~3GB)' },
+                { value: 'large', text: 'large (Equivalente a large-v3, ~3GB)' }
+            ];
+            options.forEach(opt => {
+                const el = document.createElement('option');
+                el.value = opt.value;
+                el.textContent = opt.text;
+                if (selectedModel && opt.value === selectedModel) el.selected = true;
+                modelSelect.appendChild(el);
+            });
+            if (langRow) langRow.style.display = 'flex';
+            if (gpuRow) gpuRow.style.display = 'flex';
+            if (preloadRow) preloadRow.style.display = 'flex';
+        } else if (engine === 'canary') {
+            const el = document.createElement('option');
+            el.value = 'canary-180m-flash';
+            el.textContent = 'canary-180m-flash (4 idiomas ASR + Traducción NeMo, ~280MB)';
+            el.selected = true;
+            modelSelect.appendChild(el);
+            if (langRow) langRow.style.display = 'flex';
+            if (gpuRow) gpuRow.style.display = 'none';
+            if (preloadRow) preloadRow.style.display = 'none';
+        }
     }
 
     async function loadSettings() {
@@ -310,10 +355,12 @@
                 }
             }
 
-            const whisperModelSelect = document.getElementById('maximus-whisper-model');
-            if (whisperModelSelect && data.whisper_model) {
-                whisperModelSelect.value = data.whisper_model;
+            const sttEngineSelect = document.getElementById('maximus-stt-engine');
+            if (sttEngineSelect && data.stt_engine) {
+                sttEngineSelect.value = data.stt_engine;
             }
+
+            updateModelOptions(data.stt_engine || 'whisper', data.stt_model || 'canary-180m-flash');
 
             const whisperLangSelect = document.getElementById('maximus-whisper-lang');
             if (whisperLangSelect && data.whisper_language !== undefined) {
@@ -392,16 +439,21 @@
     async function saveSettings() {
         const dirInput = document.getElementById('maximus-kokoro-dir');
         const voiceSelect = document.getElementById('maximus-voice-select');
-        const whisperModel = document.getElementById('maximus-whisper-model');
+        const engineSelect = document.getElementById('maximus-stt-engine');
+        const modelSelect = document.getElementById('maximus-stt-model');
         const whisperLang = document.getElementById('maximus-whisper-lang');
         const whisperGpu = document.getElementById('maximus-whisper-gpu');
         const whisperPreload = document.getElementById('maximus-whisper-preload');
         const statusEl = document.getElementById('maximus-save-status');
-        if (!dirInput || !voiceSelect || !whisperModel || !whisperLang || !whisperGpu || !whisperPreload || !statusEl) return;
+        if (!dirInput || !voiceSelect || !engineSelect || !modelSelect || !whisperLang || !whisperGpu || !whisperPreload || !statusEl) return;
 
         statusEl.className = 'maximus-status';
         statusEl.textContent = 'Saving...';
         statusEl.style.display = 'inline-block';
+
+        const sttEngine = engineSelect.value;
+        const sttModel = modelSelect.value;
+        const whisperModelVal = (sttEngine === 'whisper') ? sttModel : 'base';
 
         try {
             const res = await fetch('/api/maximus-odysseus/settings', {
@@ -410,7 +462,9 @@
                 body: JSON.stringify({
                     kokoro_dir: dirInput.value.trim(),
                     voice: voiceSelect.value,
-                    whisper_model: whisperModel.value,
+                    stt_engine: sttEngine,
+                    stt_model: sttModel,
+                    whisper_model: whisperModelVal,
                     whisper_language: whisperLang.value,
                     whisper_gpu: whisperGpu.checked,
                     whisper_preload: whisperPreload.checked
@@ -426,7 +480,6 @@
             statusEl.className = 'maximus-status success';
             setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
             
-            // Re-eval availability so change is picked up immediately
             if (window.aiTTSManager) {
                 window.aiTTSManager.checkAvailability();
             }

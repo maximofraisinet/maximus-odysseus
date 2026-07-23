@@ -103,21 +103,27 @@ To configure local TTS:
 
 #### 2. Speech-to-Text (Whisper STT)
 
-Odysseus allows you to dictate your messages locally via your microphone using `faster-whisper`.
+Odysseus allows you to dictate your messages locally via your microphone using your choice of Speech-to-Text engines:
+
+*   **Whisper** (via `faster-whisper`): Standard high-quality multilingual model (`tiny` up to `large-v3`). Supports optional GPU acceleration (CUDA) and model preloading.
+*   **Canary** (via `sherpa-onnx`): NVIDIA's NeMo Canary model (`canary-180m-flash`, ~280MB). Supports 4 languages (Spanish, English, German, French) for ASR and translation, running on CPU with minimal overhead.
 
 To configure local STT:
-1. Ensure `faster-whisper` and its optional dependencies are installed. You can install them by running:
+1. Ensure `faster-whisper` and `sherpa-onnx` are installed:
    ```bash
-   pip install faster-whisper
+   pip install faster-whisper sherpa-onnx
    ```
 2. Open the **Settings** modal in the Odysseus UI and navigate to the **Maximus** section.
-3. Select the desired **Modelo de Whisper** (from lightweight models like `tiny` or `base` up to larger models like `medium` or `large-v3` depending on your available VRAM/RAM).
-4. Select the **Idioma** (language) of your speech (defaults to `Auto-detect`, with Spanish and English conveniently placed at the top of the list).
-5. Configure the hardware and memory optimization settings:
-   * **Aceleración por GPU (CUDA)**: Toggle whether you want to use GPU acceleration (uses CUDA) for fast transcription, or turn it off to run on CPU and save VRAM for your local LLM.
-   * **Precargar modelo al inicio**: Toggle whether you want to load the model weights into memory immediately on startup, or lazy-load it only when you press the microphone button for the first time (recommended to keep VRAM free).
-6. Save the settings by clicking **Guardar Configuración**.
-7. A microphone icon will appear in the chat composer bar. Click it to start recording your voice, and click it again to stop and automatically transcribe the audio into the chat input.
+3. Select the desired **Motor STT**:
+   * *Whisper (Local, alta precisión)*
+   * *Canary (Local NeMo, ASR y Traducción, ~280MB)*
+4. Select the desired **Modelo STT** (dynamically updates based on the selected engine).
+5. Select the **Idioma** (language) of your speech (`es`, `en`, `fr`, `de`).
+6. Configure the hardware and memory optimization settings (when Whisper is selected):
+   * **Aceleración por GPU (CUDA)**: Toggle whether to use CUDA GPU acceleration for Whisper or CPU to keep VRAM free.
+   * **Precargar modelo al inicio**: Toggle whether to load Whisper weights into memory immediately on startup or lazy-load on first use.
+7. Save the settings by clicking **Guardar Configuración**. Canary will download automatically on-demand on first use.
+8. Click the microphone icon in the chat composer bar to start recording, and click it again to stop and automatically transcribe into the chat input.
 
 
 <details>

@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 class SettingsRequest(BaseModel):
     kokoro_dir: str
     voice: str
+    stt_engine: str = "whisper"
+    stt_model: str = "canary-180m-flash"
     whisper_model: str
     whisper_language: str
     whisper_gpu: bool = True
@@ -43,6 +45,8 @@ def setup_maximus_odysseus_routes():
         try:
             kokoro_dir = request.kokoro_dir.strip()
             voice = request.voice.strip()
+            stt_engine = request.stt_engine.strip() if request.stt_engine else "whisper"
+            stt_model = request.stt_model.strip() if request.stt_model else "canary-180m-flash"
             whisper_model = request.whisper_model.strip()
             whisper_language = request.whisper_language.strip()
             whisper_gpu = request.whisper_gpu
@@ -64,18 +68,24 @@ def setup_maximus_odysseus_routes():
                 
             old_settings = get_maximus_odysseus_settings()
             
-            # Invalidate cached Whisper model if model size or GPU acceleration changed
-            if old_settings.get("whisper_model") != whisper_model or old_settings.get("whisper_gpu") != whisper_gpu:
+            # Invalidate cached models if engine, model size, GPU acceleration or language changed
+            if (old_settings.get("stt_engine") != stt_engine or 
+                old_settings.get("stt_model") != stt_model or
+                old_settings.get("whisper_model") != whisper_model or 
+                old_settings.get("whisper_language") != whisper_language or 
+                old_settings.get("whisper_gpu") != whisper_gpu):
                 try:
                     from services.stt import get_stt_service
                     stt = get_stt_service()
-                    stt.invalidate_whisper_model()
+                    stt.invalidate_models()
                 except Exception as ex:
-                    logger.warning(f"Could not invalidate whisper model cache: {ex}")
+                    logger.warning(f"Could not invalidate model cache: {ex}")
 
             save_maximus_odysseus_settings({
                 "kokoro_dir": kokoro_dir,
                 "voice": voice,
+                "stt_engine": stt_engine,
+                "stt_model": stt_model,
                 "whisper_model": whisper_model,
                 "whisper_language": whisper_language,
                 "whisper_gpu": whisper_gpu,

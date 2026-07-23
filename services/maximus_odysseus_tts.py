@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 DEFAULT_KOKORO_SETTINGS = {
     "kokoro_dir": "kokoro-v1.0",
     "voice": "em_alex",
+    "stt_engine": "whisper",
+    "stt_model": "canary-180m-flash",
     "whisper_model": "base",
     "whisper_language": "",
     "whisper_gpu": True,
